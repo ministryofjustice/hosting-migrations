@@ -2,8 +2,9 @@ name: Post Concierge to Slack
 
 on:
   schedule:
-    # Run 9am UTC every day
-    - cron: "0 9 * * *"
+    # Run 9am UTC every weekday
+    - cron: "0 9 * * 1-5"
+  workflow_dispatch:
 
 jobs:
   post-to-slack:
@@ -11,24 +12,49 @@ jobs:
     steps:
       - name: Get current date in format like Mon 1 Jan 24
         id: date
-        run: echo "date=$(date +'%a %-d %b %H')" >> $GITHUB_OUTPUT
+        run: echo "date=$(date +'%a %-d %b %y')" >> $GITHUB_OUTPUT
 
-      # find the column with the current date
+      # Get Sheet
       - name: gsheet.action
         uses: jroehl/gsheet.action@v2.1.1
         id: headers
         with:
           spreadsheetId: ${{ secrets.CONCIERGE_ROTA_GOOGLE_SHEET_ID }}
           commands: |
-            [
-              { "command": "getData", "args": { "range": "'Probation Rota'!1:1" } }
-            ]
+                  [
+                    { "command": "getData", "args": { "range": "'Probation Rota'!A1:Z100" } }
+                  ]
         env:
           GSHEET_CLIENT_EMAIL: ${{ secrets.GSHEET_CLIENT_EMAIL }}
           GSHEET_PRIVATE_KEY: ${{ secrets.GSHEET_PRIVATE_KEY }}
 
-      - name: dump results
+      - name: Extract required cell(s)
+        # env:
+        #   #  the output of the action can be found in ${{ steps.update_worksheet.outputs.results }}
+        #   RESULTS: ${{ steps.headers.outputs.results }}
+        run: |
+          # get todays column
+          col=$(echo "${{ steps.headers.outputs.results }}" | jq -r '.results[0].result.formatted[0] | to_entries | map(select(.value == "${{ steps.date.outputs.date }}")) | .[].key')
+          # echo "$col"
+          # get name of today's concierge
+          concierge=$(echo "$RESULTS" | jq -r --arg col "$col" '.results[0].result.formatted[1][$col]')
+          # echo "$concierge"
+
+      - name: Slack notification
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+                {
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "Concierge today is :drum_roll:... \n\n*:tada:  George *\n\n Please respond with :white_check_mark: to confirm"
+                      }
+                    }
+                  ]
+                }
         env:
-          #  the output of the action can be found in ${{ steps.update_worksheet.outputs.results }}
-          RESULTS: ${{ steps.headers.outputs.results }}
-        run: echo "$RESULTS" | jq
+          SLACK_WEBHOOK_URL: ${{ secrets.PROBATION_MIGRATIONS_SLACK_WEBHOOK }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

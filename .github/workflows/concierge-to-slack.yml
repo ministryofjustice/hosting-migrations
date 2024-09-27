@@ -1,0 +1,34 @@
+name: Post Concierge to Slack
+
+on:
+  schedule:
+    # Run 9am UTC every day
+    - cron: "0 9 * * *"
+
+jobs:
+  post-to-slack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get current date in format like Mon 1 Jan 24
+        id: date
+        run: echo "date=$(date +'%a %-d %b %H')" >> $GITHUB_OUTPUT
+
+      # find the column with the current date
+      - name: gsheet.action
+        uses: jroehl/gsheet.action@v2.1.1
+        id: headers
+        with:
+          spreadsheetId: ${{ secrets.CONCIERGE_ROTA_GOOGLE_SHEET_ID }}
+          commands: |
+            [
+              { "command": "getData", "args": { "range": "'Probation Rota'!1:1" } }
+            ]
+        env:
+          GSHEET_CLIENT_EMAIL: ${{ secrets.GSHEET_CLIENT_EMAIL }}
+          GSHEET_PRIVATE_KEY: ${{ secrets.GSHEET_PRIVATE_KEY }}
+
+      - name: dump results
+        env:
+          #  the output of the action can be found in ${{ steps.update_worksheet.outputs.results }}
+          RESULTS: ${{ steps.headers.outputs.results }}
+        run: echo "$RESULTS" | jq

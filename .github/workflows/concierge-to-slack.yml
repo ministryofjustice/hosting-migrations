@@ -2,8 +2,8 @@ name: Post Concierge to Slack
 
 on:
   schedule:
-    # Run 9am UTC every weekday
-    - cron: "0 9 * * 1-5"
+    # Run 8am UTC every weekday [Currently 9am BST]
+    - cron: "0 8 * * 1-5"
   workflow_dispatch:
 
 jobs:
@@ -29,12 +29,12 @@ jobs:
           GSHEET_PRIVATE_KEY: ${{ secrets.GSHEET_PRIVATE_KEY }}
 
       - name: Extract required cell(s)
-        # env:
-        #   #  the output of the action can be found in ${{ steps.update_worksheet.outputs.results }}
-        #   RESULTS: ${{ steps.headers.outputs.results }}
+        env:
+          #  the output of the action can be found in ${{ steps.update_worksheet.outputs.results }}
+          RESULTS: ${{ steps.headers.outputs.results }}
         run: |
           # get todays column
-          col=$(echo "${{ steps.headers.outputs.results }}" | jq -r '.results[0].result.formatted[0] | to_entries | map(select(.value == "${{ steps.date.outputs.date }}")) | .[].key')
+          col=$(echo "$RESULTS" | jq -r '.results[0].result.formatted[0] | to_entries | map(select(.value == "${{ steps.date.outputs.date }}")) | .[].key')
           # echo "$col"
           # get name of today's concierge
           concierge=$(echo "$RESULTS" | jq -r --arg col "$col" '.results[0].result.formatted[1][$col]')

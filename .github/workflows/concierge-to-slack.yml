@@ -17,7 +17,7 @@ jobs:
       # Get Sheet
       - name: gsheet.action
         uses: jroehl/gsheet.action@v2.1.1
-        id: headers
+        id: sheet
         with:
           spreadsheetId: ${{ secrets.CONCIERGE_ROTA_GOOGLE_SHEET_ID }}
           commands: |
@@ -29,9 +29,10 @@ jobs:
           GSHEET_PRIVATE_KEY: ${{ secrets.GSHEET_PRIVATE_KEY }}
 
       - name: Extract required cell(s)
+        id: extract
         env:
           #  the output of the action can be found in ${{ steps.update_worksheet.outputs.results }}
-          RESULTS: ${{ steps.headers.outputs.results }}
+          RESULTS: ${{ steps.sheet.outputs.results }}
         run: |
           # get todays column
           col=$(echo "$RESULTS" | jq -r '.results[0].result.formatted[0] | to_entries | map(select(.value == "${{ steps.date.outputs.date }}")) | .[].key')
@@ -39,6 +40,7 @@ jobs:
           # get name of today's concierge
           concierge=$(echo "$RESULTS" | jq -r --arg col "$col" '.results[0].result.formatted[1][$col]')
           # echo "$concierge"
+          echo "TODAY_CONCIERGE=$concierge" >> $GITHUB_OUTPUT
 
       - name: Slack notification
         uses: slackapi/slack-github-action@v1.27.0
@@ -50,7 +52,7 @@ jobs:
                       "type": "section",
                       "text": {
                         "type": "mrkdwn",
-                        "text": "Concierge today is :drum_roll:... \n\n*:tada:  George *\n\n Please respond with :white_check_mark: to confirm"
+                        "text": "Concierge today is :drum_roll:... \n\n*:tada:  ${{ steps.extract.outputs.TODAY_CONCIERGE }} *\n\n Please respond with :white_check_mark: to confirm"
                       }
                     }
                   ]

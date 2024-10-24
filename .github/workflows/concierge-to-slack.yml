@@ -55,7 +55,7 @@ jobs:
                       "type": "section",
                       "text": {
                         "type": "mrkdwn",
-                        "text": "Concierge today is :drum_roll:... \n\n  *Probation Hosting:* ${{ steps.extract.outputs.probation_concierge }} \n\n *DSO:* ${{ steps.extract.outputs.dso_concierge }} \n\n *LAA:* ${{ steps.extract.outputs.laa_concierge }} \n :tada: \n\n Please respond with :white_check_mark: to confirm"
+                        "text": "Concierge today is :drum_roll:... \n\n  *Probation:* ${{ steps.extract.outputs.probation_concierge }} \n\n *DSO:* ${{ steps.extract.outputs.dso_concierge }} \n\n *LAA:* ${{ steps.extract.outputs.laa_concierge }} \n :tada: \n\n Please respond with :white_check_mark: to confirm"
                       }
                     }
                   ]

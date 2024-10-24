@@ -1,4 +1,4 @@
-name: Post Concierge to Slack
+name: Post Concierge to Slack [Probation]
 
 on:
   schedule:

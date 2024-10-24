@@ -21,45 +21,117 @@ jobs:
         with:
           spreadsheetId: ${{ secrets.CONCIERGE_ROTA_GOOGLE_SHEET_ID }}
           commands: |
-                  [
-                    { "command": "getData", "args": { "range": "'Rota'!A1:Z100" } }
-                  ]
+            [
+              { "command": "getData", "args": { "range": "'Rota'!A1:Z100" } }
+            ]
         env:
           GSHEET_CLIENT_EMAIL: ${{ secrets.GSHEET_CLIENT_EMAIL }}
           GSHEET_PRIVATE_KEY: ${{ secrets.GSHEET_PRIVATE_KEY }}
-          
+
+      - name: Get user ID sheet
+        uses: jroehl/gsheet.action@v2.1.1
+        id: user_id_sheet
+        with:
+          spreadsheetId: ${{ secrets.CONCIERGE_ROTA_GOOGLE_SHEET_ID }}
+          commands: |
+            [
+              { "command": "getData", "args": { "range": "'userid'!A1:Z100" } }
+            ]
+        env:
+          GSHEET_CLIENT_EMAIL: ${{ secrets.GSHEET_CLIENT_EMAIL }}
+          GSHEET_PRIVATE_KEY: ${{ secrets.GSHEET_PRIVATE_KEY }}
+
       - name: Extract required cell(s)
         id: extract
         env:
           #  the output of the action can be found in ${{ steps.update_worksheet.outputs.results }}
           RESULTS: ${{ steps.sheet.outputs.results }}
+          USER_ID_RESULTS: ${{ steps.user_id_sheet.outputs.results }}
         run: |
-          # get todays column
-          col=$(echo "$RESULTS" | jq -r '.results[0].result.formatted[0] | to_entries | map(select(.value == "${{ steps.date.outputs.date }}")) | .[].key')
-          #echo "$col"
-          # get name of today's concierge
-          probation_concierge=$(echo "$RESULTS" | jq -r --arg col "$col" '.results[0].result.formatted[1][$col]')
-          dso_concierge=$(echo "$RESULTS" | jq -r --arg col "$col" '.results[0].result.formatted[2][$col]')
-          laa_concierge=$(echo "$RESULTS" | jq -r --arg col "$col" '.results[0].result.formatted[3][$col]')
-          #echo "probation_concierge=$probation_concierge" >> $GITHUB_OUTPUT
-          #echo "dso_concierge=$dso_concierge" >> $GITHUB_OUTPUT
-          #echo "laa_concierge=$laa_concierge" >> $GITHUB_OUTPUT
+          # Get today's column
+          # DEBUG echo "$RESULTS"
+          # Find today row based on date
+          today=$(echo "$RESULTS" | jq -r '.results[0].result.formatted | map(select(.["(A)"] == "${{ steps.date.outputs.date }}"))[0]')
+
+          # Get the names of today's concierge
+          probation_concierge_name=$(echo "$today" | jq -r '."(B)"')
+          dso_concierge_name=$(echo "$today" | jq -r '."(C)"')
+          laa_concierge_name=$(echo "$today" | jq -r '."(D)"')
+
+          # Get the user ID of today's concierge
+          # echo $USER_ID_RESULTS
+          # Find the user ID of today's concierge
+          probation_concierge_id=$(echo "$USER_ID_RESULTS" | jq -r --arg probation_concierge_name "$probation_concierge_name" '.results[0].result.formatted | map(select(.["(A)"] == $probation_concierge_name))[0]["(B)"]')
+          dso_concierge_id=$(echo "$USER_ID_RESULTS" | jq -r --arg dso_concierge_name "$dso_concierge_name" '.results[0].result.formatted | map(select(.["(A)"] == $dso_concierge_name))[0]["(B)"]')
+          laa_concierge_id=$(echo "$USER_ID_RESULTS" | jq -r --arg laa_concierge_name "$laa_concierge_name" '.results[0].result.formatted | map(select(.["(A)"] == $laa_concierge_name))[0]["(B)"]')
+
+          if [ "$probation_concierge_id" == "null" ] || [ -z "$probation_concierge_id" ]; then
+            echo "Probation concierge ID not found, using Name instead"
+            probation_concierge=$probation_concierge_name
+          else
+            probation_concierge="<@${probation_concierge_id}>"
+          fi
+
+          if [ "$dso_concierge_id" == "null" ] || [ -z "$dso_concierge_id" ]; then
+            echo "DSO concierge ID not found, using Name instead"
+            dso_concierge=$dso_concierge_name
+          else
+            dso_concierge="<@${dso_concierge_id}>"
+          fi
+
+          if [ "$laa_concierge_id" == "null" ] || [ -z "$laa_concierge_id" ]; then
+            echo "LAA concierge ID not found, using Name instead"
+            laa_concierge=$laa_concierge_name
+          else
+            laa_concierge="<@${laa_concierge_id}>"
+          fi
+
+          # Output concierge
+          echo "probation_concierge=$probation_concierge" >> $GITHUB_OUTPUT
+          echo "dso_concierge=$dso_concierge" >> $GITHUB_OUTPUT
+          echo "laa_concierge=$laa_concierge" >> $GITHUB_OUTPUT
+
+          # DEBUG
+          # echo $today
+          # echo $probation_concierge
+          # echo $dso_concierge
+          # echo $laa_concierge
 
       - name: Slack notification
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
+            {
+              "blocks": [
                 {
-                  "blocks": [
-                    {
-                      "type": "section",
-                      "text": {
-                        "type": "mrkdwn",
-                        "text": "Concierge today is :drum_roll:... \n\n  *Probation:* ${{ steps.extract.outputs.probation_concierge }} \n\n *DSO:* ${{ steps.extract.outputs.dso_concierge }} \n\n *LAA:* ${{ steps.extract.outputs.laa_concierge }} \n :tada: \n\n Please respond with :white_check_mark: to confirm"
-                      }
-                    }
-                  ]
-                 }
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Concierge today is* :drum_roll:... \n\n *Probation:* ${{ steps.extract.outputs.probation_concierge }} \n\n *DSO:* ${{ steps.extract.outputs.dso_concierge }} \n\n *LAA:* ${{ steps.extract.outputs.laa_concierge }} \n\n Please react with :white_check_mark: to confirm"
+                  }
+                }
+              ]
+             }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+
+      - name: Slack notification [failure]
+        uses: slackapi/slack-github-action@v1.27.0
+        if: failure()
+        with:
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Concierge announcer failed to run :gull_scream: \n\n <Please check the logs for more information | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>"
+                  }
+                }
+              ]
+             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

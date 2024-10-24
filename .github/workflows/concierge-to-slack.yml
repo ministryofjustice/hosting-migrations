@@ -36,14 +36,14 @@ jobs:
         run: |
           # get todays column
           col=$(echo "$RESULTS" | jq -r '.results[0].result.formatted[0] | to_entries | map(select(.value == "${{ steps.date.outputs.date }}")) | .[].key')
-          echo "$col"
+          #echo "$col"
           # get name of today's concierge
           probation_concierge=$(echo "$RESULTS" | jq -r --arg col "$col" '.results[0].result.formatted[1][$col]')
           dso_concierge=$(echo "$RESULTS" | jq -r --arg col "$col" '.results[0].result.formatted[2][$col]')
           laa_concierge=$(echo "$RESULTS" | jq -r --arg col "$col" '.results[0].result.formatted[3][$col]')
-          echo "probation_concierge=$probation_concierge" >> $GITHUB_OUTPUT
-          echo "dso_concierge=$dso_concierge" >> $GITHUB_OUTPUT
-          echo "laa_concierge=$laa_concierge" >> $GITHUB_OUTPUT
+          #echo "probation_concierge=$probation_concierge" >> $GITHUB_OUTPUT
+          #echo "dso_concierge=$dso_concierge" >> $GITHUB_OUTPUT
+          #echo "laa_concierge=$laa_concierge" >> $GITHUB_OUTPUT
 
       - name: Slack notification
         uses: slackapi/slack-github-action@v1.27.0

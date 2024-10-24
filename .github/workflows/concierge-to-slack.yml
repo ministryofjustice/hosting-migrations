@@ -41,26 +41,25 @@ jobs:
           probation_concierge=$(echo "$RESULTS" | jq -r --arg col "$col" '.results[0].result.formatted[1][$col]')
           dso_concierge=$(echo "$RESULTS" | jq -r --arg col "$col" '.results[0].result.formatted[2][$col]')
           laa_concierge=$(echo "$RESULTS" | jq -r --arg col "$col" '.results[0].result.formatted[3][$col]')
-          echo "$probation_concierge"
-          echo "$dso_concierge"
-          echo "$laa_concierge"
-          # echo "TODAY_CONCIERGE=$concierge" >> $GITHUB_OUTPUT
+          echo "probation_concierge=$probation_concierge" >> $GITHUB_OUTPUT
+          echo "dso_concierge=$dso_concierge" >> $GITHUB_OUTPUT
+          echo "laa_concierge=$laa_concierge" >> $GITHUB_OUTPUT
 
-      # - name: Slack notification
-      #   uses: slackapi/slack-github-action@v1.27.0
-      #   with:
-      #     payload: |
-      #           {
-      #             "blocks": [
-      #               {
-      #                 "type": "section",
-      #                 "text": {
-      #                   "type": "mrkdwn",
-      #                   "text": "Concierge today is :drum_roll:... \n\n*:tada:  ${{ steps.extract.outputs.TODAY_CONCIERGE }} *\n\n Please respond with :white_check_mark: to confirm"
-      #                 }
-      #               }
-      #             ]
-      #            }
-      #   env:
-      #     SLACK_WEBHOOK_URL: ${{ secrets.PROBATION_MIGRATIONS_SLACK_WEBHOOK }}
-      #     SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+      - name: Slack notification
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+                {
+                  "blocks": [
+                    {
+                      "type": "section",
+                      "text": {
+                        "type": "mrkdwn",
+                        "text": "Concierge today is :drum_roll:... \n\n:tada:  *Probation Hosting:* ${{ steps.extract.outputs.probation_concierge }} \n\n *DSO:* ${{ steps.extract.outputs.dso_concierge }} \n\n *LAA:* ${{ steps.extract.outputs.laa_concierge }} \n\n Please respond with :white_check_mark: to confirm"
+                      }
+                    }
+                  ]
+                 }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

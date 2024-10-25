@@ -3,7 +3,7 @@ name: Post Concierge to Slack
 on:
   schedule:
     # Run 8am UTC every weekday [Currently 9am BST]
-    - cron: "0 8 * * 1-5"
+    - cron: "0 9 * * 1-5"
   workflow_dispatch:
 
 jobs:

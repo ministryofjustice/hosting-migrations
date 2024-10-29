@@ -58,6 +58,21 @@ jobs:
           dso_concierge_name=$(echo "$today" | jq -r '."(C)"')
           laa_concierge_name=$(echo "$today" | jq -r '."(D)"')
 
+          if [ -z "$probation_concierge_name" ]; then
+            echo "No entry found for probation concierge"
+            probation_concierge_name="No entry found"
+          fi
+
+          if [ -z "$dso_concierge_name" ]; then
+            echo "No entry found for DSO concierge"
+            dso_concierge_name="No entry found"
+          fi
+
+          if [ -z "$laa_concierge_name" ]; then
+            echo "No entry found for LAA concierge"
+            laa_concierge_name="No entry found"
+          fi
+
           # Get the user ID of today's concierge
           # echo $USER_ID_RESULTS
           # Find the user ID of today's concierge

@@ -75,10 +75,10 @@ jobs:
 
           if [ "$probation_concierge_name" == "No entry found" ] && [ "$dso_concierge_name" == "No entry found" ] && [ "$laa_concierge_name" == "No entry found" ]; then
             echo "No concierge found for any team today"
-            no_concierge_found="true" >> $GITHUB_OUTPUT
+            echo "no_concierge_found=true" >> $GITHUB_OUTPUT
             exit 0
           else
-            no_concierge_found="false" >> $GITHUB_OUTPUT
+            echo "no_concierge_found=false" >> $GITHUB_OUTPUT
           fi
 
           # Get the user ID of today's concierge
@@ -122,7 +122,7 @@ jobs:
 
       - name: Slack notification
         uses: slackapi/slack-github-action@v1.27.0
-        if: ${{ steps.extract.outputs.no_concierge_found }} == 'false'
+        if: ${{ steps.extract.outputs.no_concierge_found == "false" }}
         with:
           payload: |
             {
@@ -142,7 +142,7 @@ jobs:
 
       - name: Slack notification [no concierge found]
         uses: slackapi/slack-github-action@v1.27.0
-        if: ${{ steps.extract.outputs.no_concierge_found }} == 'true'
+        if: ${{ steps.extract.outputs.no_concierge_found == "true" }}
         with:
           payload: |
             {
@@ -151,7 +151,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": ":confused_parrot: No concierge found for any team today :shrug: \n\n Either a bank holiday :palm_tree: :tada: or a _terrible_ *mistake* :mild-panic-intensifies:! \n\n <Please check the sheet for more information | ${{ secrets.CONCIERGE_ROTA_GOOGLE_SHEET_URL }}>"
+                    "text": ":confused_parrot: No concierge found for any team today :shrug: \n\n Either a bank holiday :palm_tree: :tada: or a _terrible_ *mistake* :mild-panic-intensifies:! \n\n Please check the google sheet for more info."
                   }
                 }
               ]

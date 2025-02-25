@@ -1,0 +1,25 @@
+version: 2
+updates:
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    # Look for `.github/workflows` in the root directory
+    directory: "/"
+    # Check for updates weekly
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/London"
+    # Set labels for pull requests
+    labels:
+      - "dependencies"
+      - "github-actions"
+    # Assign pull requests to maintainers (optional, remove if not needed)
+    # assignees:
+    #   - "username"
+    # Limit the number of open PRs Dependabot can have
+    open-pull-requests-limit: 10
+    # Configure commit message style
+    commit-message:
+      prefix: "chore"
+      include: "scope"

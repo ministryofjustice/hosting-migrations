@@ -124,6 +124,8 @@ jobs:
         uses: slackapi/slack-github-action@v2.0.0
         if: ${{ steps.extract.outputs.no_concierge_found == 'false' }}
         with:
+          webhook-type: incoming-webhook
+          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
           payload: |
             {
               "blocks": [
@@ -136,14 +138,13 @@ jobs:
                 }
               ]
              }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
       - name: Slack notification [no concierge found]
         uses: slackapi/slack-github-action@v2.0.0
         if: ${{ steps.extract.outputs.no_concierge_found == 'true' }}
         with:
+          webhook-type: incoming-webhook
+          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
           payload: |
             {
               "blocks": [
@@ -156,14 +157,13 @@ jobs:
                 }
               ]
              }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
       - name: Slack notification [failure]
         uses: slackapi/slack-github-action@v2.0.0
         if: failure()
         with:
+          webhook-type: incoming-webhook
+          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
           payload: |
             {
               "blocks": [
@@ -176,6 +176,3 @@ jobs:
                 }
               ]
              }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK

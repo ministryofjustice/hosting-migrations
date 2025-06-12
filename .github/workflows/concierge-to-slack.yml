@@ -28,59 +28,59 @@ jobs:
           echo "$output" >> $GITHUB_OUTPUT
           exit $exitcode
 
-#      - name: Slack notification
-#        uses: slackapi/slack-github-action@v2.0.0
-#        if: ${{ steps.extract.outputs.no_concierge_found == 'false' }}
-#        with:
-#          webhook-type: incoming-webhook
-#          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
-#          payload: |
-#            {
-#              "blocks": [
-#                {
-#                  "type": "section",
-#                  "text": {
-#                    "type": "mrkdwn",
-#                    "text": "*Concierge today is* :drum_roll:... \n\n *Probation:* ${{ steps.extract.outputs.probation }} \n\n *DSO:* ${{ steps.extract.outputs.dso }} \n\n *LAA:* ${{ steps.extract.outputs.laae }} \n\n Please react with :white_check_mark: to confirm"
-#                  }
-#                }
-#              ]
-#             }
-#
-#      - name: Slack notification [no concierge found]
-#        uses: slackapi/slack-github-action@v2.0.0
-#        if: ${{ steps.extract.outputs.no_concierge_found == 'true' }}
-#        with:
-#          webhook-type: incoming-webhook
-#          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
-#          payload: |
-#            {
-#              "blocks": [
-#                {
-#                  "type": "section",
-#                  "text": {
-#                    "type": "mrkdwn",
-#                    "text": ":confused_parrot: No concierge found for any team today :shrug: \n\n Either a bank holiday :palm_tree: :tada: or a _terrible_ *mistake* :mild-panic-intensifies:! \n\n Please check the pager duty rota for more info."
-#                  }
-#                }
-#              ]
-#             }
-#
-#      - name: Slack notification [failure]
-#        uses: slackapi/slack-github-action@v2.0.0
-#        if: failure()
-#        with:
-#          webhook-type: incoming-webhook
-#          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
-#          payload: |
-#            {
-#              "blocks": [
-#                {
-#                  "type": "section",
-#                  "text": {
-#                    "type": "mrkdwn",
-#                    "text": "The magic concierge announcer bot failed to run :gull_scream: \n\n <Please check the logs for more information | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>"
-#                  }
-#                }
-#              ]
-#             }
+      - name: Slack notification
+        uses: slackapi/slack-github-action@v2.0.0
+        if: ${{ steps.extract.outputs.no_concierge_found == 'false' }}
+        with:
+          webhook-type: incoming-webhook
+          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "TESTING TESTING TESTING ... *Concierge today is* :drum_roll:... \n\n *Probation:* ${{ steps.extract.outputs.probation }} \n\n *DSO:* ${{ steps.extract.outputs.dso }} \n\n *LAA:* ${{ steps.extract.outputs.laae }} \n\n Please react with :white_check_mark: to confirm"
+                  }
+                }
+              ]
+             }
+
+      - name: Slack notification [no concierge found]
+        uses: slackapi/slack-github-action@v2.0.0
+        if: ${{ steps.extract.outputs.no_concierge_found == 'true' }}
+        with:
+          webhook-type: incoming-webhook
+          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":confused_parrot: No concierge found for any team today :shrug: \n\n Either a bank holiday :palm_tree: :tada: or a _terrible_ *mistake* :mild-panic-intensifies:! \n\n Please check the pager duty rota for more info."
+                  }
+                }
+              ]
+             }
+
+      - name: Slack notification [failure]
+        uses: slackapi/slack-github-action@v2.0.0
+        if: failure()
+        with:
+          webhook-type: incoming-webhook
+          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "The magic concierge announcer bot failed to run :gull_scream: \n\n <Please check the logs for more information | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>"
+                  }
+                }
+              ]
+             }

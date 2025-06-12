@@ -2,8 +2,8 @@ name: Post Concierge to Slack
 
 on:
   schedule:
-   # Run 7:30am UTC every weekday [Currently 8:30am BST]
-   - cron: "30 7 * * 1-5"
+    # Run 7:30am UTC every weekday [Currently 8:30am BST]
+    - cron: "30 7 * * 1-5"
   workflow_dispatch:
 
 jobs:
@@ -15,6 +15,9 @@ jobs:
         with:
           ref: ${{ github.ref }}
 
+      # Configuration is in github actions variables + secrets
+      # New team members should add their slack member id to EMAIL_TO_SLACK_MEMBER_ID var
+      # PagerDuty API key is generated from My Profile -> User Settings
       - name: Get concierge from PagerDuty
         id: extract
         env:

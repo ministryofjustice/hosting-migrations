@@ -10,169 +10,77 @@ jobs:
   post-to-slack:
     runs-on: ubuntu-latest
     steps:
-      - name: Get current date in format like Mon 1 Jan 24
-        id: date
-        run: echo "date=$(date +'%a %-d %b %y')" >> $GITHUB_OUTPUT
-
-      # Get Sheet
-      - name: gsheet.action
-        uses: jroehl/gsheet.action@v2.1.1
-        id: sheet
+      - name: Checkout Repository
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b  # v4.1.4
         with:
-          spreadsheetId: ${{ secrets.CONCIERGE_ROTA_GOOGLE_SHEET_ID }}
-          commands: |
-            [
-              { "command": "getData", "args": { "range": "'Rota'!A1:Z100" } }
-            ]
-        env:
-          GSHEET_CLIENT_EMAIL: ${{ secrets.GSHEET_CLIENT_EMAIL }}
-          GSHEET_PRIVATE_KEY: ${{ secrets.GSHEET_PRIVATE_KEY }}
+          ref: ${{ github.ref }}
 
-      - name: Get user ID sheet
-        uses: jroehl/gsheet.action@v2.1.1
-        id: user_id_sheet
-        with:
-          spreadsheetId: ${{ secrets.CONCIERGE_ROTA_GOOGLE_SHEET_ID }}
-          commands: |
-            [
-              { "command": "getData", "args": { "range": "'userid'!A1:Z100" } }
-            ]
-        env:
-          GSHEET_CLIENT_EMAIL: ${{ secrets.GSHEET_CLIENT_EMAIL }}
-          GSHEET_PRIVATE_KEY: ${{ secrets.GSHEET_PRIVATE_KEY }}
-
-      - name: Extract required cell(s)
+      - name: Get concierge from PagerDuty
         id: extract
         env:
-          #  the output of the action can be found in ${{ steps.update_worksheet.outputs.results }}
-          RESULTS: ${{ steps.sheet.outputs.results }}
-          USER_ID_RESULTS: ${{ steps.user_id_sheet.outputs.results }}
+          EMAIL_TO_SLACK_MEMBER_ID: ${{ vars.EMAIL_TO_SLACK_MEMBER_ID }}
+          SQUAD_TO_PAGERDUTY_SCHEDULE_ID: ${{ vars.SQUAD_TO_PAGERDUTY_SCHEDULE_ID }}
+          PAGERDUTY_API_KEY: ${{ secrets.PAGERDUTY_API_KEY }}
         run: |
-          # Get today's column
-          # DEBUG echo "$RESULTS"
-          # Find today row based on date
-          today=$(echo "$RESULTS" | jq -r '.results[0].result.formatted | map(select(.["(A)"] == "${{ steps.date.outputs.date }}"))[0]')
+          python3 -m pip install pagerduty
+          $output=$(python3 src/concierge-to-slack/get_concierge.py || exitcode=$?)
+          echo "$output"
+          echo "$output" >> $GITHUB_OUTPUT
+          exit $exitcode
 
-          # Get the names of today's concierge
-          probation_concierge_name=$(echo "$today" | jq -r '."(B)"')
-          dso_concierge_name=$(echo "$today" | jq -r '."(C)"')
-          laa_concierge_name=$(echo "$today" | jq -r '."(D)"')
-
-          if [ -z "$probation_concierge_name" ]; then
-            echo "No entry found for probation concierge"
-            probation_concierge_name="No entry found"
-          fi
-
-          if [ -z "$dso_concierge_name" ]; then
-            echo "No entry found for DSO concierge"
-            dso_concierge_name="No entry found"
-          fi
-
-          if [ -z "$laa_concierge_name" ]; then
-            echo "No entry found for LAA concierge"
-            laa_concierge_name="No entry found"
-          fi
-
-          if [ "$probation_concierge_name" == "No entry found" ] && [ "$dso_concierge_name" == "No entry found" ] && [ "$laa_concierge_name" == "No entry found" ]; then
-            echo "No concierge found for any team today"
-            echo "no_concierge_found=true" >> $GITHUB_OUTPUT
-            exit 0
-          else
-            echo "no_concierge_found=false" >> $GITHUB_OUTPUT
-          fi
-
-          # Get the user ID of today's concierge
-          # echo $USER_ID_RESULTS
-          # Find the user ID of today's concierge
-          probation_concierge_id=$(echo "$USER_ID_RESULTS" | jq -r --arg probation_concierge_name "$probation_concierge_name" '.results[0].result.formatted | map(select(.["(A)"] == $probation_concierge_name))[0]["(B)"]')
-          dso_concierge_id=$(echo "$USER_ID_RESULTS" | jq -r --arg dso_concierge_name "$dso_concierge_name" '.results[0].result.formatted | map(select(.["(A)"] == $dso_concierge_name))[0]["(B)"]')
-          laa_concierge_id=$(echo "$USER_ID_RESULTS" | jq -r --arg laa_concierge_name "$laa_concierge_name" '.results[0].result.formatted | map(select(.["(A)"] == $laa_concierge_name))[0]["(B)"]')
-
-          if [ "$probation_concierge_id" == "null" ] || [ -z "$probation_concierge_id" ]; then
-            echo "Probation concierge ID not found, using Name instead"
-            probation_concierge=$probation_concierge_name
-          else
-            probation_concierge="<@${probation_concierge_id}>"
-          fi
-
-          if [ "$dso_concierge_id" == "null" ] || [ -z "$dso_concierge_id" ]; then
-            echo "DSO concierge ID not found, using Name instead"
-            dso_concierge=$dso_concierge_name
-          else
-            dso_concierge="<@${dso_concierge_id}>"
-          fi
-
-          if [ "$laa_concierge_id" == "null" ] || [ -z "$laa_concierge_id" ]; then
-            echo "LAA concierge ID not found, using Name instead"
-            laa_concierge=$laa_concierge_name
-          else
-            laa_concierge="<@${laa_concierge_id}>"
-          fi
-
-          # Output concierge
-          echo "probation_concierge=$probation_concierge" >> $GITHUB_OUTPUT
-          echo "dso_concierge=$dso_concierge" >> $GITHUB_OUTPUT
-          echo "laa_concierge=$laa_concierge" >> $GITHUB_OUTPUT
-
-          # DEBUG
-          # echo $today
-          # echo $probation_concierge
-          # echo $dso_concierge
-          # echo $laa_concierge
-
-      - name: Slack notification
-        uses: slackapi/slack-github-action@v2.0.0
-        if: ${{ steps.extract.outputs.no_concierge_found == 'false' }}
-        with:
-          webhook-type: incoming-webhook
-          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
-          payload: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Concierge today is* :drum_roll:... \n\n *Probation:* ${{ steps.extract.outputs.probation_concierge }} \n\n *DSO:* ${{ steps.extract.outputs.dso_concierge }} \n\n *LAA:* ${{ steps.extract.outputs.laa_concierge }} \n\n Please react with :white_check_mark: to confirm"
-                  }
-                }
-              ]
-             }
-
-      - name: Slack notification [no concierge found]
-        uses: slackapi/slack-github-action@v2.0.0
-        if: ${{ steps.extract.outputs.no_concierge_found == 'true' }}
-        with:
-          webhook-type: incoming-webhook
-          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
-          payload: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": ":confused_parrot: No concierge found for any team today :shrug: \n\n Either a bank holiday :palm_tree: :tada: or a _terrible_ *mistake* :mild-panic-intensifies:! \n\n Please check the google sheet for more info."
-                  }
-                }
-              ]
-             }
-
-      - name: Slack notification [failure]
-        uses: slackapi/slack-github-action@v2.0.0
-        if: failure()
-        with:
-          webhook-type: incoming-webhook
-          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
-          payload: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "The magic concierge announcer bot failed to run :gull_scream: \n\n <Please check the logs for more information | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>"
-                  }
-                }
-              ]
-             }
+#      - name: Slack notification
+#        uses: slackapi/slack-github-action@v2.0.0
+#        if: ${{ steps.extract.outputs.no_concierge_found == 'false' }}
+#        with:
+#          webhook-type: incoming-webhook
+#          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
+#          payload: |
+#            {
+#              "blocks": [
+#                {
+#                  "type": "section",
+#                  "text": {
+#                    "type": "mrkdwn",
+#                    "text": "*Concierge today is* :drum_roll:... \n\n *Probation:* ${{ steps.extract.outputs.probation }} \n\n *DSO:* ${{ steps.extract.outputs.dso }} \n\n *LAA:* ${{ steps.extract.outputs.laae }} \n\n Please react with :white_check_mark: to confirm"
+#                  }
+#                }
+#              ]
+#             }
+#
+#      - name: Slack notification [no concierge found]
+#        uses: slackapi/slack-github-action@v2.0.0
+#        if: ${{ steps.extract.outputs.no_concierge_found == 'true' }}
+#        with:
+#          webhook-type: incoming-webhook
+#          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
+#          payload: |
+#            {
+#              "blocks": [
+#                {
+#                  "type": "section",
+#                  "text": {
+#                    "type": "mrkdwn",
+#                    "text": ":confused_parrot: No concierge found for any team today :shrug: \n\n Either a bank holiday :palm_tree: :tada: or a _terrible_ *mistake* :mild-panic-intensifies:! \n\n Please check the pager duty rota for more info."
+#                  }
+#                }
+#              ]
+#             }
+#
+#      - name: Slack notification [failure]
+#        uses: slackapi/slack-github-action@v2.0.0
+#        if: failure()
+#        with:
+#          webhook-type: incoming-webhook
+#          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
+#          payload: |
+#            {
+#              "blocks": [
+#                {
+#                  "type": "section",
+#                  "text": {
+#                    "type": "mrkdwn",
+#                    "text": "The magic concierge announcer bot failed to run :gull_scream: \n\n <Please check the logs for more information | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>"
+#                  }
+#                }
+#              ]
+#             }

@@ -1,9 +1,9 @@
 name: Post Concierge to Slack
 
 on:
-  # schedule:
-  #  # Run 7:30am UTC every weekday [Currently 8:30am BST]
-  #  - cron: "30 7 * * 1-5"
+  schedule:
+   # Run 7:30am UTC every weekday [Currently 8:30am BST]
+   - cron: "30 7 * * 1-5"
   workflow_dispatch:
 
 jobs:
@@ -41,7 +41,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "TESTING TESTING TESTING ... *Concierge today is* :drum_roll:... \n\n *Probation:* ${{ steps.extract.outputs.probation }} \n\n *DSO:* ${{ steps.extract.outputs.dso }} \n\n *LAA:* ${{ steps.extract.outputs.laae }} \n\n Please react with :white_check_mark: to confirm"
+                    "text": "... *Concierge today is* :drum_roll:... \n\n *Probation:* ${{ steps.extract.outputs.probation_slack }} \n\n *DSO:* ${{ steps.extract.outputs.dso_slack }} \n\n *LAA:* ${{ steps.extract.outputs.laa_slack }} \n\n Please react with :white_check_mark: to confirm"
                   }
                 }
               ]

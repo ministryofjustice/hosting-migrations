@@ -41,11 +41,12 @@ for squad_name in squad_to_pagerduty_schedule_id.keys():
         no_concierge_found = 'false'
         schedule           = schedules[0]
         email              = schedule['email']
+        print(f'{squad_name}_email={email}')
         if email in email_to_slack_member_id:
             member_id = email_to_slack_member_id[email]
-            print(f'{squad_name}=<@{member_id}>')
+            print(f'{squad_name}_slack=<@{member_id}>')
         else:
-            print(f'{squad_name}={email.split(".")[0].capitalize()}')
+            print(f'{squad_name}_slack={email.split(".")[0].capitalize()}')
     else:
-        print(f'{squad_name}=')
+        print(f'{squad_name}_slack=')
 print(f'no_concierge_found={no_concierge_found}')

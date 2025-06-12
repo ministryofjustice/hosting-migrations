@@ -23,7 +23,7 @@ jobs:
           PAGERDUTY_API_KEY: ${{ secrets.PAGERDUTY_API_KEY }}
         run: |
           python3 -m pip install pagerduty
-          $output=$(python3 src/concierge-to-slack/get_concierge.py || exitcode=$?)
+          output=$(python3 src/concierge-to-slack/get_concierge.py || exitcode=$?)
           echo "$output"
           echo "$output" >> $GITHUB_OUTPUT
           exit $exitcode

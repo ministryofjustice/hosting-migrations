@@ -35,7 +35,7 @@ no_concierge_found = 'true'
 
 for squad_name in squad_to_pagerduty_schedule_id.keys():
     schedule_id  = squad_to_pagerduty_schedule_id[squad_name]
-    query_string = f'?since={date}T09%3A00Z&until={date}T16%3A00Z'
+    query_string = f'?since={date}T09%3A30Z&until={date}T10%3A00Z'
     schedules    = client.rget(f'/schedules/{schedule_id}/users{query_string}')
     if len(schedules) > 0 and 'email' in schedules[0]:
         no_concierge_found = 'false'

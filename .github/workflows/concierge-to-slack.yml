@@ -32,7 +32,7 @@ jobs:
           exit $exitcode
 
       - name: Slack notification
-        uses: slackapi/slack-github-action@v2.0.0
+        uses: slackapi/slack-github-action@v2.1.1
         if: ${{ steps.extract.outputs.no_concierge_found == 'false' }}
         with:
           webhook-type: incoming-webhook
@@ -51,7 +51,7 @@ jobs:
              }
 
       - name: Slack notification [no concierge found]
-        uses: slackapi/slack-github-action@v2.0.0
+        uses: slackapi/slack-github-action@v2.1.1
         if: ${{ steps.extract.outputs.no_concierge_found == 'true' }}
         with:
           webhook-type: incoming-webhook
@@ -70,7 +70,7 @@ jobs:
              }
 
       - name: Slack notification [failure]
-        uses: slackapi/slack-github-action@v2.0.0
+        uses: slackapi/slack-github-action@v2.1.1
         if: failure()
         with:
           webhook-type: incoming-webhook

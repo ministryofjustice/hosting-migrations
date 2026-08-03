@@ -37,7 +37,7 @@ jobs:
         if: ${{ steps.extract.outputs.no_concierge_found == 'false' }}
         with:
           webhook-type: incoming-webhook
-          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
+          webhook: ${{ secrets.PLATOPS_SLACK_WEBHOOK }}
           payload: |
             {
               "blocks": [
@@ -45,7 +45,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Concierge today is* :drum_roll:... \n\n *Probation:* ${{ steps.extract.outputs.probation_slack }} \n\n *DSO:* ${{ steps.extract.outputs.dso_slack }} \n\n *LAA:* ${{ steps.extract.outputs.laa_slack }} \n\n Please react with :white_check_mark: to confirm"
+                    "text": "*Concierge today is* :drum_roll:... \n\n *Probation:* ${{ steps.extract.outputs.probation_slack }} \n\n *DSO:* ${{ steps.extract.outputs.dso_slack }} \n\n *LAA:* ${{ steps.extract.outputs.laa_slack }} \n\n *Platops Primary:* ${{ steps.extract.outputs.platops_primary_slack }} \n\n *Platops Secondary:* ${{ steps.extract.outputs.platops_secondary_slack }} \n\n Please react with :white_check_mark: to confirm"
                   }
                 }
               ]
@@ -56,7 +56,7 @@ jobs:
         if: ${{ steps.extract.outputs.no_concierge_found == 'true' }}
         with:
           webhook-type: incoming-webhook
-          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
+          webhook: ${{ secrets.PLATOPS_SLACK_WEBHOOK }}
           payload: |
             {
               "blocks": [
@@ -75,7 +75,7 @@ jobs:
         if: failure()
         with:
           webhook-type: incoming-webhook
-          webhook: ${{ secrets.TEAM_MIGRATIONS_SLACK_WEBHOOK }}
+          webhook: ${{ secrets.PLATOPS_SLACK_WEBHOOK }}
           payload: |
             {
               "blocks": [

@@ -1,4 +1,4 @@
-name: Post Concierge to Slack
+name: PlatOps Post Concierge to Slack
 
 on:
   schedule:

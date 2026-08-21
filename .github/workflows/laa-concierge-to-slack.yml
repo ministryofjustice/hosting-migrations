@@ -1,0 +1,90 @@
+name: LAA Post Concierge to Slack
+
+on:
+  schedule:
+    # Run 6:30am London time every weekday
+    - cron: "30 6 * * 1-5"
+      timezone: "Europe/London"
+  workflow_dispatch:
+
+jobs:
+  post-to-slack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: ${{ github.ref }}
+
+      # Configuration is in github actions variables + secrets
+      # New team members should add their slack member id to EMAIL_TO_SLACK_MEMBER_ID var
+      # PagerDuty API key is generated from My Profile -> User Settings
+      - name: Get concierge from PagerDuty
+        id: extract
+        env:
+          EMAIL_TO_SLACK_MEMBER_ID: ${{ vars.EMAIL_TO_SLACK_MEMBER_ID }}
+          SQUAD_TO_PAGERDUTY_SCHEDULE_ID: ${{ vars.SQUAD_TO_PAGERDUTY_SCHEDULE_ID }}
+          PAGERDUTY_API_KEY: ${{ secrets.PAGERDUTY_API_KEY }}
+        run: |
+          python3 -m pip install pagerduty
+          output=$(python3 src/concierge-to-slack/get_concierge.py || exitcode=$?)
+          echo "$output"
+          echo "$output" >> $GITHUB_OUTPUT
+          exit $exitcode
+
+      - name: Slack notification
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d  # v4.0.0
+        if: ${{ steps.extract.outputs.no_concierge_found == 'false' }}
+        with:
+          webhook-type: incoming-webhook
+          webhook: ${{ secrets.LAA_SLACK_WEBHOOK }}
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Concierge today is* :drum_roll:... \n\n *LAA:* ${{ steps.extract.outputs.laa_slack }} \n\n Please react with :white_check_mark: to confirm"
+                  }
+                }
+              ]
+             }
+
+      - name: Slack notification [no concierge found]
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d  # v4.0.0
+        if: ${{ steps.extract.outputs.no_concierge_found == 'true' }}
+        with:
+          webhook-type: incoming-webhook
+          webhook: ${{ secrets.LAA_SLACK_WEBHOOK }}
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":confused_parrot: No concierge found for any team today :shrug: \n\n Either a bank holiday :palm_tree: :tada: or a _terrible_ *mistake* :mild-panic-intensifies:! \n\n Please check the pager duty rota for more info."
+                  }
+                }
+              ]
+             }
+
+      - name: Slack notification [failure]
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d  # v4.0.0
+        if: failure()
+        with:
+          webhook-type: incoming-webhook
+          webhook: ${{ secrets.LAA_SLACK_WEBHOOK }}
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "The magic concierge announcer bot failed to run :gull_scream: \n\n <Please check the logs for more information | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}>"
+                  }
+                }
+              ]
+             }

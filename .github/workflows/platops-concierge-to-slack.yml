@@ -45,7 +45,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Concierge today is* :drum_roll:... \n\n *Platops Primary:* ${{ steps.extract.outputs.platops_primary_slack }} \n\n *Platops Secondary:* ${{ steps.extract.outputs.platops_secondary_slack }} \n\n Please react with :white_check_mark: to confirm"
+                    "text": "*Concierge today is* :drum_roll:... \n\n *Platops Primary:* ${{ steps.extract.outputs.platops_primary_slack }} \n\n *Platops Secondary:* ${{ steps.extract.outputs.platops_secondary_slack }} \n\n Please react with :white_check_mark: to confirm you are available for support today. \n\n  If you are the Primary, please react with :thumbsup: once you have checked there are no outstanding PagerDuty alerts from last night."
                   }
                 }
               ]

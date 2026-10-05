@@ -1,10 +1,6 @@
 name: PlatOps Post Concierge to Slack
 
 on:
-  schedule:
-    # Run 6:30am London time every weekday
-    - cron: "30 6 * * 1-5"
-      timezone: "Europe/London"
   workflow_dispatch:
 
 jobs:
